@@ -1,10 +1,10 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 class RestaurantManagerBase(BaseModel):
     name: str
-    email: str
+    email: EmailStr
 
 
 class RestaurantManagerCreate(RestaurantManagerBase):
@@ -17,5 +17,5 @@ class RestaurantManagerUpdate(BaseModel):
 class RestaurantManager(RestaurantManagerBase):
     manager_id: int
 
-    class ConfigDict:
+    class Config:
         from_attributes = True

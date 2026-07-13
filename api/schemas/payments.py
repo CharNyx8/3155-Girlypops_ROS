@@ -24,5 +24,5 @@ class Payment(PaymentBase):
     paymentID: int
     orderID: int
 
-    class ConfigDict:
+    class Config:
         from_attributes = True

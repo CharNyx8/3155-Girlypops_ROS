@@ -19,5 +19,5 @@ class MenuItemInventoryUpdate(BaseModel):
 
 
 class MenuItemInventoryOut(MenuItemInventoryBase):
-    class ConfigDict:
+    class Config:
         from_attributes = True

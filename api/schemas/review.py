@@ -6,6 +6,7 @@ class ReviewBase(BaseModel):
     rating: int = Field(..., ge=1, le=5)
     comment: Optional[str] = None
     customerID: int
+    item_id: int
 
 class ReviewCreate(ReviewBase):
     pass

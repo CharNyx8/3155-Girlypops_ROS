@@ -21,6 +21,7 @@ class InventoryUpdate(BaseModel):
 
 class Inventory(InventoryBase):
     ingredient_id: int
+    maintained_by_manager_id: Optional[int] = None
 
-    class ConfigDict:
+    class Config:
         from_attributes = True

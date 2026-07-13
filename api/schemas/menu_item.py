@@ -27,6 +27,7 @@ class MenuItemUpdate(BaseModel):
 
 class MenuItem(MenuItemBase):
     item_id: int
+    created_by_manager_id: Optional[int] = None
 
-    class ConfigDict:
+    class Config:
         from_attributes = True

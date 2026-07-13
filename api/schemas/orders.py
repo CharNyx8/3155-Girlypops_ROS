@@ -2,7 +2,6 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 from pydantic import BaseModel
-from .order_details import OrderDetail
 
 
 class OrderBase(BaseModel):
@@ -14,7 +13,8 @@ class OrderBase(BaseModel):
 
 
 class OrderCreate(OrderBase):
-    pass
+    customerID: int
+    employeeID: int
 
 
 class OrderUpdate(BaseModel):
@@ -29,7 +29,8 @@ class OrderUpdate(BaseModel):
 class Order(OrderBase):
     orderID: int
     orderDate: Optional[datetime] = None
-    order_details: list[OrderDetail] = None
+    customerID: int
+    employeeID: int
 
-    class ConfigDict:
+    class Config:
         from_attributes = True
