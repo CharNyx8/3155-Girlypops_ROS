@@ -14,3 +14,4 @@ class Review(Base):
     customerID = Column(Integer, ForeignKey('customers.customerID', ondelete = "CASCADE"), nullable = False)
 
     customer = relationship("Customer", back_populates = "reviews")
+    menuItem = relationship("MenuItem", back_populates="reviews")
