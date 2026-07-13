@@ -10,6 +10,7 @@ class OrderBase(BaseModel):
     orderType: str
     totalPrice: Decimal
     estimatedTime: int
+    promoCode: Optional[str] = None
 
 
 class OrderCreate(OrderBase):
@@ -22,6 +23,7 @@ class OrderUpdate(BaseModel):
     orderType: Optional[str] = None
     totalPrice: Optional[Decimal] = None
     estimatedTime: Optional[int] = None
+    promoCode: Optional[str] = None
 
 
 class Order(OrderBase):
