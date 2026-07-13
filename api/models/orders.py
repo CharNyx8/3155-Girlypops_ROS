@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DECIMAL, DATETIME
+from sqlalchemy import Column, ForeignKey, Integer, String, DECIMAL, DATETIME
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..dependencies.database import Base
@@ -13,5 +13,8 @@ class Order(Base):
     orderType = Column(String(50), nullable=False)
     totalPrice = Column(DECIMAL(10, 2), nullable=False)
     estimatedTime = Column(Integer, nullable=False)
+    promoCode = Column(String(50), ForeignKey("promo_codes.promoCode"), nullable=True)
 
     order_details = relationship("OrderDetail", back_populates="order")
+    payment = relationship("Payment", back_populates="order", uselist=False)
+    promo_code = relationship("PromoCode", back_populates="orders")

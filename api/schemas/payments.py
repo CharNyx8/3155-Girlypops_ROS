@@ -10,10 +10,11 @@ class PaymentBase(BaseModel):
 
 
 class PaymentCreate(PaymentBase):
-    pass
+    orderID: int
 
 
 class PaymentUpdate(BaseModel):
+    orderID: Optional[int] = None
     paymentMethod: Optional[str] = None
     paymentStatus: Optional[str] = None
     amount: Optional[Decimal] = None
@@ -21,6 +22,7 @@ class PaymentUpdate(BaseModel):
 
 class Payment(PaymentBase):
     paymentID: int
+    orderID: int
 
     class ConfigDict:
         from_attributes = True
