@@ -9,7 +9,7 @@ class ReportBase(BaseModel):
 
 
 class ReportCreate(ReportBase):
-    pass
+    generated_by_manager_id: Optional[int] = None
 
 
 class ReportUpdate(BaseModel):
@@ -21,5 +21,5 @@ class Report(ReportBase):
     report_id: int
     generated_by_manager_id: Optional[int] = None
 
-    class ConfigDict:
+    class Config:
         from_attributes = True

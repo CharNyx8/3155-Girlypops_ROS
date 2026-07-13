@@ -7,11 +7,12 @@ from pydantic import BaseModel
 class PromoCodeBase(BaseModel):
     discountAmount: Decimal
     expirationDate: datetime
-    active: bool
+    active: bool = True
 
 
 class PromoCodeCreate(PromoCodeBase):
     promoCode: str
+    managerID: int
 
 
 class PromoCodeUpdate(BaseModel):
@@ -22,6 +23,7 @@ class PromoCodeUpdate(BaseModel):
 
 class PromoCode(PromoCodeBase):
     promoCode: str
+    managerID: int
 
-    class ConfigDict:
+    class Config:
         from_attributes = True

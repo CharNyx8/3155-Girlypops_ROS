@@ -17,5 +17,5 @@ class EmployeeUpdate(BaseModel):
 class RestaurantEmployeeSchema(EmployeeBase):
     id: int
 
-    class ConfigDict:
+    class Config:
         from_attributes = True
