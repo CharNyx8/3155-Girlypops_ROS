@@ -6,11 +6,11 @@ from ..dependencies.database import Base
 class Review(Base):
     __tablename__ = 'reviews'
 
-    reviewID = Column(Integer, primary_key = True, autoincrement = True)
+    review_id = Column(Integer, primary_key = True, autoincrement = True)
     comment = Column(String(250), nullable = True)
     rating = Column(Integer, nullable = False)
-    reviewDate = Column(Date, default = date.today)
+    review_date = Column(Date, default = date.today)
 
-    customerID = Column(Integer, ForeignKey('customers.customerID', ondelete = "CASCADE"), nullable = False)
+    customer_id = Column(Integer, ForeignKey('customers.customer_id', ondelete = "CASCADE"), nullable = False)
 
     customer = relationship("Customer", back_populates = "reviews")
