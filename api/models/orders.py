@@ -18,3 +18,5 @@ class Order(Base):
     order_details = relationship("OrderDetail", back_populates="order")
     payment = relationship("Payment", back_populates="order", uselist=False)
     promo_code = relationship("PromoCode", back_populates="orders")
+    customer = relationship("Customer", back_populates="orders")
+    employee = relationship("RestaurantEmployee", back_populates="orders")

@@ -12,4 +12,3 @@ class RestaurantEmployee(Base):
     role = Column(String, nullable=False)
 
     orders = relationship("Order", back_populates="employee")
-    inventory_items = relationship("Inventory", back_populates="employee")
