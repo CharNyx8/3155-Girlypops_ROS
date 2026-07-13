@@ -15,8 +15,8 @@ class MenuItem(Base):
     dietary_type = Column(String(50))
     is_available = Column(BOOLEAN, nullable=False, default=True)
     created_by_manager_id = Column(Integer, ForeignKey("restaurant_managers.manager_id", ondelete="SET NULL"))
-    created_at = Column(DATETIME, nullable=False, default=datetime.now())
-    updated_at = Column(DATETIME, nullable=False, default=datetime.now(), onupdate=datetime.now())
+    created_at = Column(DATETIME, nullable=False, default=datetime.now)
+    updated_at = Column(DATETIME, nullable=False, default=datetime.now, onupdate=datetime.now)
 
 
     created_by = relationship("RestaurantManager", back_populates="menu_item")
