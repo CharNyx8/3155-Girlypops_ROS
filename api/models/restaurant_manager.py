@@ -13,3 +13,4 @@ class RestaurantManager(Base):
     menu_items = relationship("MenuItem", back_populates="created_by", cascade="all, delete-orphan")
     inventory_items = relationship("Inventory", back_populates="maintained_by", cascade="all, delete-orphan")
     reports = relationship("Report", back_populates="generated_by", cascade="all, delete-orphan")
+    promoCodes = relationship("PromoCode", back_populates="manager")
