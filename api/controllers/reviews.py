@@ -1,10 +1,6 @@
-from urllib import request
-
 from fastapi import HTTPException, Response, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-
-from models import customer
 from ..models import customer as customer_model
 from ..models import menu_item as menu_item_model
 from ..models import review as model
@@ -137,4 +133,29 @@ def update(db: Session, review_id: int, request):
         )
     return review_query.first()
 
-##Still Need to add a Delete Function
+
+def delete(db: Session, review_id: int):
+    review_query = (
+        db.query(model.Review)
+        .filter(model.Review.reviewID == review_id)
+    )
+    review = review_query.first()
+
+    if not review:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Review not found"
+        )
+    try:
+        review_query.delete(synchronize_session=False)
+        db.commit()
+
+    except SQLAlchemyError as error:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail = str(error.__dict__.get("orig", error))
+        )
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
