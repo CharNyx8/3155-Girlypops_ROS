@@ -6,13 +6,45 @@ from ..dependencies.database import Base
 class Review(Base):
     __tablename__ = 'reviews'
 
-    reviewID = Column(Integer, primary_key = True, autoincrement = True)
-    comment = Column(String(250), nullable = True)
-    rating = Column(Integer, nullable = False)
-    reviewDate = Column(Date, default = date.today)
+    reviewID = Column(
+        Integer,
+        primary_key = True,
+        autoincrement = True
+    )
 
-    customerID = Column(Integer, ForeignKey('customers.CustomerID', ondelete = "CASCADE"), nullable = False)
-    item_ID = Column(Integer, ForeignKey('menu_items.item_id', ondelete = "CASCADE"), nullable = False)
+    comment = Column(
+        String(250),
+        nullable= True
+    )
 
-    customer = relationship("Customer", back_populates = "reviews")
-    menuItem = relationship("MenuItem", back_populates="reviews")
+    rating = Column(
+        Integer,
+        nullable = False
+    )
+
+    reviewDate = Column(
+        Date,
+        default = date.today
+    )
+
+    customerID = Column(
+        Integer,
+        ForeignKey('customers.CustomerID', ondelete = "CASCADE"),
+        nullable = False
+    )
+
+    item_ID = Column(
+        Integer,
+        ForeignKey('menu_items.item_id', ondelete = "CASCADE"),
+        nullable = False
+    )
+
+    customer = relationship(
+        "Customer",
+        back_populates = "reviews"
+    )
+
+    menuItem = relationship(
+        "MenuItem",
+        back_populates="reviews"
+    )
