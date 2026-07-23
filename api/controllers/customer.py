@@ -1,18 +1,15 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Response
-from ..models import orders as model
+from ..models import customer as model
 from sqlalchemy.exc import SQLAlchemyError
 
 
 def create(db: Session, request):
-    new_item = model.Order(
-        orderStatus=request.orderStatus,
-        orderType=request.orderType,
-        totalPrice=request.totalPrice,
-        estimatedTime=request.estimatedTime,
-        promoCode=request.promoCode,
-        customerID=request.customerID,
-        employeeID=request.employeeID
+    new_item = model.Customer(
+        name=request.name,
+        email=request.email,
+        phone=request.phone,
+        hasAccount=request.hasAccount
     )
 
     try:
@@ -28,7 +25,7 @@ def create(db: Session, request):
 
 def read_all(db: Session):
     try:
-        result = db.query(model.Order).all()
+        result = db.query(model.Customer).all()
     except SQLAlchemyError as e:
         error = str(e.__dict__['orig'])
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
@@ -37,7 +34,7 @@ def read_all(db: Session):
 
 def read_one(db: Session, item_id):
     try:
-        item = db.query(model.Order).filter(model.Order.orderID == item_id).first()
+        item = db.query(model.Customer).filter(model.Customer.customerID == item_id).first()
         if not item:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Id not found!")
     except SQLAlchemyError as e:
@@ -48,7 +45,7 @@ def read_one(db: Session, item_id):
 
 def update(db: Session, item_id, request):
     try:
-        item = db.query(model.Order).filter(model.Order.orderID == item_id)
+        item = db.query(model.Customer).filter(model.Customer.customerID == item_id)
         if not item.first():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Id not found!")
         update_data = request.dict(exclude_unset=True)
@@ -62,7 +59,7 @@ def update(db: Session, item_id, request):
 
 def delete(db: Session, item_id):
     try:
-        item = db.query(model.Order).filter(model.Order.orderID == item_id)
+        item = db.query(model.Customer).filter(model.Customer.customerID == item_id)
         if not item.first():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Id not found!")
         item.delete(synchronize_session=False)
