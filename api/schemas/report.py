@@ -5,7 +5,7 @@ from datetime import datetime
 
 class ReportBase(BaseModel):
     report_name: str
-    date_generated: datetime
+
 
 
 class ReportCreate(ReportBase):
