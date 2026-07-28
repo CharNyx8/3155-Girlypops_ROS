@@ -44,7 +44,7 @@ class Review(Base):
         back_populates = "reviews"
     )
 
-    menuItem = relationship(
+    menu_item = relationship(
         "MenuItem",
         back_populates="reviews"
     )
