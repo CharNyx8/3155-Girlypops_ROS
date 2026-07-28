@@ -4,6 +4,11 @@ from ..controllers import restaurant_manager as controller
 from ..dependencies.database import get_db
 from ..schemas import restaurant_manager as schema
 
+router = APIRouter(
+    prefix="/restaurant-manager ",
+    tags=["Restaurant Manager"],
+)
+
 @router.post(
     "/",
     response_model=schema.RestaurantManager,
