@@ -17,7 +17,7 @@ def create(db: Session, request):
 
     menu_item = (
         db.query(menu_item_model.MenuItem)
-        .filter(menu_item_model.MenuItem.itemID == request.item_i)
+        .filter(menu_item_model.MenuItem.item_id == request.item_id)
         .first()
     )
 
@@ -59,10 +59,10 @@ def read_all(db: Session):
             detail = str(error.__dict__.get("orig", error))
         )
 
-def read_one (db: session, review_id: int):
+def read_one (db: Session, review_id: int):
     review = (
         db.query(model.Review)
-        .filter(model.Review.reviewID == review_id)
+        .filter(model.Review.review_id == review_id)
         .first()
     )
     if not review:
@@ -76,7 +76,7 @@ def read_by_menu_item(db: Session, item_id: int):
     menu_item = (
         db.query(menu_item_model.MenuItem)
         .filter(
-            menu_item_model.MenuItem.itemID == item_id
+            menu_item_model.MenuItem.item_id == item_id
         )
         .first()
     )
