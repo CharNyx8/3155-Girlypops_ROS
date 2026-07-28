@@ -7,7 +7,7 @@ class RestaurantEmployee(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    employee_id = Column(String(50), unique=True, index=True, nullable=False)
+    employeeID = Column(Integer, unique=True, index=True, nullable=False)
     name = Column(String(150), nullable=False)
     role = Column(String(50), nullable=False)
 

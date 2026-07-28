@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 class EmployeeBase(BaseModel):
-    employee_id: str
+    employeeID: str
     name: str
     role: str
 
@@ -10,7 +10,7 @@ class EmployeeCreate(EmployeeBase):
     pass
 
 class EmployeeUpdate(BaseModel):
-    employee_id: Optional[str] = None
+    employeeID: Optional[str] = None
     name: Optional[str] = None
     role: Optional[str] = None
 
