@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from ..models import restaurant_manager as model
 
-def create(db: Session, Request):
+def create(db: Session, request):
     new_manager = model.RestaurantManager(
         name=request.name,
         email=request.email

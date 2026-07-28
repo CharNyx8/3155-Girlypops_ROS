@@ -29,7 +29,7 @@ class Review(Base):
 
     customerID = Column(
         Integer,
-        ForeignKey('customers.CustomerID', ondelete = "CASCADE"),
+        ForeignKey('customers.customerID', ondelete = "CASCADE"),
         nullable = False
     )
 
