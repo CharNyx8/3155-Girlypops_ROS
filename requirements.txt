@@ -7,3 +7,5 @@ pytest-mock
 httpx
 cryptography
 pydantic
+email-validator
+pydantic[email]
