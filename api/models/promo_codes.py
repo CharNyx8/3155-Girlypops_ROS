@@ -1,16 +1,17 @@
-from sqlalchemy import Boolean, Column, DECIMAL, String, DATETIME, Integer, ForeignKey
+from sqlalchemy import Boolean, Column, DateTime, DECIMAL, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
+
 from ..dependencies.database import Base
 
 
 class PromoCode(Base):
     __tablename__ = "promo_codes"
 
-    promoCode = Column(String(50), primary_key=True, index=True)
-    discountAmount = Column(DECIMAL(10, 2), nullable=False)
-    expirationDate = Column(DATETIME, nullable=False)
-    active = Column(Boolean, nullable=False, default=True)
-    manager_id = Column(Integer, ForeignKey("restaurant_managers.manager_id"), nullable=False)
+    promo_code = Column(String(50), primary_key=True)
+    discount_amount = Column(DECIMAL(10, 2), nullable=False)
+    expiration_date = Column(DateTime, nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+    manager_id = Column(Integer,ForeignKey("restaurant_managers.manager_id", ondelete="CASCADE"), nullable=False)
 
-    orders = relationship("Order", back_populates="promo_code")
-    manager = relationship("RestaurantManager", back_populates="promoCodes")
+    orders = relationship("Order", back_populates="promo")
+    manager = relationship("RestaurantManager", back_populates="promo_codes")

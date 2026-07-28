@@ -1,25 +1,25 @@
-from typing import Optional
-from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, ConfigDict
 
 
 class ReportBase(BaseModel):
     report_name: str
-
+    generated_by_manager_id: Optional[int] = None
 
 
 class ReportCreate(ReportBase):
-    generated_by_manager_id: Optional[int] = None
+    pass
 
 
 class ReportUpdate(BaseModel):
     report_name: Optional[str] = None
-    date_generated: Optional[datetime] = None
+    generated_by_manager_id: Optional[int] = None
 
 
 class Report(ReportBase):
     report_id: int
-    generated_by_manager_id: Optional[int] = None
+    date_generated: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

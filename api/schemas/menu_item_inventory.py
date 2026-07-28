@@ -1,6 +1,7 @@
-from typing import Optional
-from pydantic import BaseModel
 from decimal import Decimal
+from typing import Optional
+
+from pydantic import BaseModel, ConfigDict
 
 
 class MenuItemInventoryBase(BaseModel):
@@ -17,6 +18,5 @@ class MenuItemInventoryUpdate(BaseModel):
     quantity_required: Optional[Decimal] = None
 
 
-class MenuItemInventoryOut(MenuItemInventoryBase):
-    class Config:
-        from_attributes = True
+class MenuItemInventory(MenuItemInventoryBase):
+    model_config = ConfigDict(from_attributes=True)

@@ -5,10 +5,12 @@ from ..controllers import inventory as controller
 from ..dependencies.database import get_db
 from ..schemas import inventory as schema
 
+
 router = APIRouter(
     prefix="/inventory",
     tags=["Inventory"]
 )
+
 
 @router.post(
     "/",
@@ -19,10 +21,8 @@ def create_inventory_item(
     request: schema.InventoryCreate,
     db: Session = Depends(get_db)
 ):
-    return controller.create(
-        db=db,
-        request=request
-    )
+    return controller.create(db=db, request=request)
+
 
 @router.get(
     "/",
@@ -33,6 +33,7 @@ def read_all_inventory_items(
 ):
     return controller.read_all(db)
 
+
 @router.get(
     "/{ingredient_id}",
     response_model=schema.Inventory
@@ -41,10 +42,8 @@ def read_inventory_item(
     ingredient_id: int,
     db: Session = Depends(get_db)
 ):
-    return controller.read_one(
-        db=db,
-        ingredient_id=ingredient_id
-    )
+    return controller.read_one(db=db, ingredient_id=ingredient_id)
+
 
 @router.put(
     "/{ingredient_id}",
@@ -55,11 +54,8 @@ def update_inventory_item(
     request: schema.InventoryUpdate,
     db: Session = Depends(get_db)
 ):
-    return controller.update(
-        db=db,
-        ingredient_id=ingredient_id,
-        request=request
-    )
+    return controller.update(db=db, ingredient_id=ingredient_id, request=request)
+
 
 @router.delete(
     "/{ingredient_id}",
@@ -69,7 +65,4 @@ def delete_inventory_item(
     ingredient_id: int,
     db: Session = Depends(get_db)
 ):
-    return controller.delete(
-        db=db,
-        ingredient_id=ingredient_id
-    )
+    return controller.delete(db=db, ingredient_id=ingredient_id)
