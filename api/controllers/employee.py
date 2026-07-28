@@ -4,33 +4,32 @@ from sqlalchemy.orm import Session
 
 from ..models import employee as model
 
-def create(db: Session, request):
 
+def create(db: Session, request):
     new_employee = model.RestaurantEmployee(
-        employee_id = request.employee_id,
-        name = request.name,
-        role = request.role,
+        name=request.name,
+        role=request.role
     )
 
     try:
         db.add(new_employee)
         db.commit()
         db.refresh(new_employee)
-
     except SQLAlchemyError as error:
         db.rollback()
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(error.__dict__.get("orig", error))
         )
+
     return new_employee
 
-def read_all(db:Session):
+
+def read_all(db: Session):
     try:
-        employees =(
+        return (
             db.query(model.RestaurantEmployee)
-            .order_by(model.restaurantEmployee.name.asc())
+            .order_by(model.RestaurantEmployee.name.asc())
             .all()
         )
     except SQLAlchemyError as error:
@@ -38,85 +37,61 @@ def read_all(db:Session):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(error.__dict__.get("orig", error))
         )
-    return employees
 
-def read_one(db:Session, employee_id: int):
-    employee =(
-        db.query(model.RestaurantEmployee)
-        .filter(model.RestaurantEmployee.id == employee_id)
-        .first()
-    )
+
+def read_one(db: Session, employee_id: int):
+    try:
+        employee = (
+            db.query(model.RestaurantEmployee)
+            .filter(model.RestaurantEmployee.employee_id == employee_id)
+            .first()
+        )
+    except SQLAlchemyError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error.__dict__.get("orig", error))
+        )
 
     if not employee:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Employee not found"
         )
+
     return employee
 
+
 def update(db: Session, employee_id: int, request):
-    employee_query = (
-        db.query(model.RestaurantEmployee)
-        .filter(model.RestaurantEmployee.id == employee_id)
-    )
-
-    employee = employee_query.first()
-
-    if not employee:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Employee not found"
-        )
+    employee = read_one(db=db, employee_id=employee_id)
+    update_data = request.model_dump(exclude_unset=True)
 
     try:
-        update_data = request.model_dump(exclude_unset=True)
-
-        employee_query.update(
-            update_data,
-            synchronize_session=False
-        )
+        for field, value in update_data.items():
+            setattr(employee, field, value)
 
         db.commit()
-
+        db.refresh(employee)
     except SQLAlchemyError as error:
         db.rollback()
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(error.__dict__.get("orig", error))
         )
 
-    return employee_query.first()
+    return employee
+
 
 def delete(db: Session, employee_id: int):
-    employee_query = (
-        db.query(model.RestaurantEmployee)
-        .filter(model.RestaurantEmployee.id == employee_id)
-    )
-
-    employee = employee_query.first()
-
-    if not employee:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Employee not found"
-        )
+    employee = read_one(db=db, employee_id=employee_id)
 
     try:
-        employee_query.delete(
-            synchronize_session=False
-        )
-
+        db.delete(employee)
         db.commit()
-
     except SQLAlchemyError as error:
         db.rollback()
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(error.__dict__.get("orig", error))
         )
 
-    return Response(
-        status_code=status.HTTP_204_NO_CONTENT
-    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

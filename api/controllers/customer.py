@@ -1,70 +1,95 @@
-from sqlalchemy.orm import Session
-from fastapi import HTTPException, status, Response
-from ..models import customer as model
+from fastapi import HTTPException, Response, status
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
+from ..models import customer as model
 
 
 def create(db: Session, request):
-    new_item = model.Customer(
+    new_customer = model.Customer(
         name=request.name,
         email=request.email,
         phone=request.phone,
-        hasAccount=request.hasAccount
+        has_account=request.has_account
     )
 
     try:
-        db.add(new_item)
+        db.add(new_customer)
         db.commit()
-        db.refresh(new_item)
-    except SQLAlchemyError as e:
-        error = str(e.__dict__['orig'])
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+        db.refresh(new_customer)
+    except SQLAlchemyError as error:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error.__dict__.get("orig", error))
+        )
 
-    return new_item
+    return new_customer
 
 
 def read_all(db: Session):
     try:
-        result = db.query(model.Customer).all()
-    except SQLAlchemyError as e:
-        error = str(e.__dict__['orig'])
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
-    return result
+        return db.query(model.Customer).order_by(model.Customer.name.asc()).all()
+    except SQLAlchemyError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error.__dict__.get("orig", error))
+        )
 
 
-def read_one(db: Session, item_id):
+def read_one(db: Session, customer_id: int):
     try:
-        item = db.query(model.Customer).filter(model.Customer.customerID == item_id).first()
-        if not item:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Id not found!")
-    except SQLAlchemyError as e:
-        error = str(e.__dict__['orig'])
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
-    return item
+        customer = (
+            db.query(model.Customer)
+            .filter(model.Customer.customer_id == customer_id)
+            .first()
+        )
+    except SQLAlchemyError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error.__dict__.get("orig", error))
+        )
+
+    if not customer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Customer not found"
+        )
+
+    return customer
 
 
-def update(db: Session, item_id, request):
+def update(db: Session, customer_id: int, request):
+    customer = read_one(db=db, customer_id=customer_id)
+    update_data = request.model_dump(exclude_unset=True)
+
     try:
-        item = db.query(model.Customer).filter(model.Customer.customerID == item_id)
-        if not item.first():
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Id not found!")
-        update_data = request.dict(exclude_unset=True)
-        item.update(update_data, synchronize_session=False)
+        for field, value in update_data.items():
+            setattr(customer, field, value)
+
         db.commit()
-    except SQLAlchemyError as e:
-        error = str(e.__dict__['orig'])
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
-    return item.first()
+        db.refresh(customer)
+    except SQLAlchemyError as error:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error.__dict__.get("orig", error))
+        )
+
+    return customer
 
 
-def delete(db: Session, item_id):
+def delete(db: Session, customer_id: int):
+    customer = read_one(db=db, customer_id=customer_id)
+
     try:
-        item = db.query(model.Customer).filter(model.Customer.customerID == item_id)
-        if not item.first():
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Id not found!")
-        item.delete(synchronize_session=False)
+        db.delete(customer)
         db.commit()
-    except SQLAlchemyError as e:
-        error = str(e.__dict__['orig'])
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    except SQLAlchemyError as error:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error.__dict__.get("orig", error))
+        )
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)

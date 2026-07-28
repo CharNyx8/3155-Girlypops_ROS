@@ -1,6 +1,7 @@
-from typing import Optional
-from pydantic import BaseModel
 from decimal import Decimal
+from typing import Optional
+
+from pydantic import BaseModel, ConfigDict
 
 
 class MenuItemBase(BaseModel):
@@ -10,6 +11,7 @@ class MenuItemBase(BaseModel):
     category: Optional[str] = None
     dietary_type: Optional[str] = None
     is_available: bool = True
+    created_by_manager_id: Optional[int] = None
 
 
 class MenuItemCreate(MenuItemBase):
@@ -23,11 +25,10 @@ class MenuItemUpdate(BaseModel):
     category: Optional[str] = None
     dietary_type: Optional[str] = None
     is_available: Optional[bool] = None
+    created_by_manager_id: Optional[int] = None
 
 
 class MenuItem(MenuItemBase):
     item_id: int
-    created_by_manager_id: Optional[int] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

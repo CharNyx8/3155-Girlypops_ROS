@@ -1,29 +1,28 @@
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
-from pydantic import BaseModel
+
+from pydantic import BaseModel, ConfigDict
 
 
 class PromoCodeBase(BaseModel):
-    discountAmount: Decimal
-    expirationDate: datetime
-    active: bool = True
+    promo_code: str
+    discount_amount: Decimal
+    expiration_date: datetime
+    is_active: bool = True
+    manager_id: int
 
 
 class PromoCodeCreate(PromoCodeBase):
-    promoCode: str
-    managerID: int
+    pass
 
 
 class PromoCodeUpdate(BaseModel):
-    discountAmount: Optional[Decimal] = None
-    expirationDate: Optional[datetime] = None
-    active: Optional[bool] = None
+    discount_amount: Optional[Decimal] = None
+    expiration_date: Optional[datetime] = None
+    is_active: Optional[bool] = None
+    manager_id: Optional[int] = None
 
 
 class PromoCode(PromoCodeBase):
-    promoCode: str
-    managerID: int
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

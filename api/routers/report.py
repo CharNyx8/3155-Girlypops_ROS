@@ -21,10 +21,7 @@ def create_report(
     request: schema.ReportCreate,
     db: Session = Depends(get_db)
 ):
-    return controller.create(
-        db=db,
-        request=request
-    )
+    return controller.create(db=db, request=request)
 
 
 @router.get(
@@ -45,10 +42,7 @@ def read_report(
     report_id: int,
     db: Session = Depends(get_db)
 ):
-    return controller.read_one(
-        db=db,
-        report_id=report_id
-    )
+    return controller.read_one(db=db, report_id=report_id)
 
 
 @router.put(
@@ -60,11 +54,7 @@ def update_report(
     request: schema.ReportUpdate,
     db: Session = Depends(get_db)
 ):
-    return controller.update(
-        db=db,
-        report_id=report_id,
-        request=request
-    )
+    return controller.update(db=db, report_id=report_id, request=request)
 
 
 @router.delete(
@@ -75,7 +65,4 @@ def delete_report(
     report_id: int,
     db: Session = Depends(get_db)
 ):
-    return controller.delete(
-        db=db,
-        report_id=report_id
-    )
+    return controller.delete(db=db, report_id=report_id)

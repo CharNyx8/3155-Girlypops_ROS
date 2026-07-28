@@ -1,36 +1,36 @@
 from datetime import datetime
 from decimal import Decimal
 from typing import Optional
-from pydantic import BaseModel
+
+from pydantic import BaseModel, ConfigDict
 
 
 class OrderBase(BaseModel):
-    orderStatus: str
-    orderType: str
-    totalPrice: Decimal
-    estimatedTime: int
-    promoCode: Optional[str] = None
+    order_status: str
+    order_type: str
+    total_price: Decimal
+    estimated_time: int
+    promo_code: Optional[str] = None
+    customer_id: Optional[int] = None
+    employee_id: Optional[int] = None
 
 
 class OrderCreate(OrderBase):
-    customerID: int
-    employeeID: int
+    pass
 
 
 class OrderUpdate(BaseModel):
-    orderDate: Optional[datetime] = None
-    orderStatus: Optional[str] = None
-    orderType: Optional[str] = None
-    totalPrice: Optional[Decimal] = None
-    estimatedTime: Optional[int] = None
-    promoCode: Optional[str] = None
+    order_status: Optional[str] = None
+    order_type: Optional[str] = None
+    total_price: Optional[Decimal] = None
+    estimated_time: Optional[int] = None
+    promo_code: Optional[str] = None
+    customer_id: Optional[int] = None
+    employee_id: Optional[int] = None
 
 
 class Order(OrderBase):
-    orderID: int
-    orderDate: Optional[datetime] = None
-    customerID: int
-    employeeID: int
+    order_id: int
+    order_date: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

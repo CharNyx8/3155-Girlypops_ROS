@@ -1,25 +1,24 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, DECIMAL, DATETIME, func
+from sqlalchemy import Column, DateTime, DECIMAL, ForeignKey, Integer, String, func
 from sqlalchemy.orm import relationship
-from datetime import datetime
+
 from ..dependencies.database import Base
 
 
 class Order(Base):
     __tablename__ = "orders"
 
-    orderID = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    orderDate = Column(DATETIME, nullable=False, server_default=func.now())
-    orderStatus = Column(String(50), nullable=False)
-    orderType = Column(String(50), nullable=False)
-    totalPrice = Column(DECIMAL(10, 2), nullable=False)
-    estimatedTime = Column(Integer, nullable=False)
+    order_id = Column(Integer, primary_key=True, autoincrement=True)
+    order_date = Column(DateTime, nullable=False, server_default=func.now())
+    order_status = Column(String(50), nullable=False)
+    order_type = Column(String(50), nullable=False)
+    total_price = Column(DECIMAL(10, 2), nullable=False)
+    estimated_time = Column(Integer, nullable=False)
 
-    promoCode = Column(String(50), ForeignKey("promo_codes.promoCode"), nullable=True)
-    customerID = Column(Integer, ForeignKey("customers.customerID"), nullable=True)
-    employeeID = Column(Integer, ForeignKey("restaurant_employees.employeeID"), nullable=True)
+    promo_code = Column(String(50), ForeignKey("promo_codes.promo_code"), nullable=True)
+    customer_id = Column(Integer, ForeignKey("customers.customer_id"), nullable=True)
+    employee_id = Column(Integer, ForeignKey("restaurant_employees.employee_id"), nullable=True)
 
     payment = relationship("Payment", back_populates="order", uselist=False)
-    promo_code = relationship("PromoCode", back_populates="orders")
+    promo = relationship("PromoCode", back_populates="orders")
     customer = relationship("Customer", back_populates="orders")
     employee = relationship("RestaurantEmployee", back_populates="orders")
-    
