@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
+from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -23,3 +24,8 @@ class Report(ReportBase):
     date_generated: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class DailyRevenue(BaseModel):
+    report_date: datetime
+    order_count: int
+    total_revenue: Decimal

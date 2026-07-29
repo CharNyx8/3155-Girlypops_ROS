@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
+from datetime import date
 
 from ..controllers import report as controller
 from ..dependencies.database import get_db
@@ -32,6 +33,20 @@ def read_all_reports(
     db: Session = Depends(get_db)
 ):
     return controller.read_all(db)
+
+
+@router.get(
+    "/daily-revenue",
+    response_model=schema.DailyRevenue
+)
+def read_daily_revenue(
+    report_date: date,
+    db: Session = Depends(get_db)
+):
+    return controller.read_daily_revenue(
+        db=db,
+        report_date=report_date
+    )
 
 
 @router.get(

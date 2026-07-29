@@ -1,9 +1,14 @@
 from fastapi import HTTPException, Response, status
+from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from datetime import date, datetime, time
+from decimal import Decimal
 
 from ..models import report as model
 from ..models import restaurant_manager as manager_model
+from ..models import orders as order_model
+from ..models import paymentgs as payment_model
 
 
 # Find Manager
@@ -78,6 +83,40 @@ def read_one(db: Session, report_id: int):
         )
 
     return report
+
+
+# Daily Revenue
+def read_daily_revenue(db: Session, report_date: date):
+    start_datetime = datetime.combine(report_date, time.min)
+    end_datetime = datetime.combine(report_date, time.max)
+
+    try:
+        result = (
+            db.query(func.count(payment_model.Payment.payment_id),
+                     func.coalesce(func.sum(payment_model.Payment.amount), 0)
+        ).join(
+                order_model.Order,
+                payment_model.Payment.order_id == order_model.Order.order_id
+        ).filter(
+                order_model.Order.order_date >= start_datetime,
+                order_model.Order.order_date <= end_datetime,
+                payment_model.Payment.payment_status == "Paid"
+            ).first()
+    )
+    except SQLAlchemyError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error.__dict__.get("orig", error))
+        )
+
+    order_count = result[0] if result else 0
+    total_revenue = result[1] if result else Decimal("0.00")
+
+    return {
+        "report_date": report_date,
+        "order_count": order_count,
+        "total_revenue": total_revenue
+    }
 
 
 # Update
