@@ -23,3 +23,4 @@ class MenuItem(Base):
     created_by = relationship("RestaurantManager", back_populates="menu_items")
     ingredient_links = relationship("MenuItemInventory",back_populates="menu_item",cascade="all, delete-orphan")
     reviews = relationship("Review", back_populates="menu_item", cascade="all, delete-orphan")
+    order_details = relationship("OrderDetails", back_populates="menu_item", cascade="all, delete-orphan")
