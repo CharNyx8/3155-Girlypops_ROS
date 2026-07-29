@@ -22,3 +22,4 @@ class Order(Base):
     promo = relationship("PromoCode", back_populates="orders")
     customer = relationship("Customer", back_populates="orders")
     employee = relationship("RestaurantEmployee", back_populates="orders")
+    order_details = relationship("OrderDetails", back_populates="order", cascade="all, delete-orphan")

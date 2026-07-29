@@ -9,7 +9,8 @@ from . import (
     promo_codes,
     report,
     restaurant_manager,
-    review
+    review,
+    order_details
 )
 from ..dependencies.database import Base, engine
 
