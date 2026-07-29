@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from ..models import payments as model
 
 
+# Create
 def create(db: Session, request):
     new_payment = model.Payment(
         order_id=request.order_id,
@@ -27,6 +28,7 @@ def create(db: Session, request):
     return new_payment
 
 
+# Read
 def read_all(db: Session):
     try:
         return db.query(model.Payment).all()
@@ -59,6 +61,7 @@ def read_one(db: Session, payment_id: int):
     return payment
 
 
+# Update
 def update(db: Session, payment_id: int, request):
     payment = read_one(db=db, payment_id=payment_id)
     update_data = request.model_dump(exclude_unset=True)
@@ -79,6 +82,7 @@ def update(db: Session, payment_id: int, request):
     return payment
 
 
+# Delete
 def delete(db: Session, payment_id: int):
     payment = read_one(db=db, payment_id=payment_id)
 

@@ -7,6 +7,7 @@ from ..models import order_details as model
 from ..models import orders as order_model
 
 
+# Create
 def create(db: Session, request):
     order = (
         db.query(order_model.Order)
@@ -54,6 +55,7 @@ def create(db: Session, request):
     return new_detail
 
 
+# Read
 def read_all(db: Session):
     try:
         return db.query(model.OrderDetail).all()
@@ -86,6 +88,7 @@ def read_one(db: Session, order_detail_id: int):
     return detail
 
 
+# Read by Order
 def read_by_order(db: Session, order_id: int):
     order = (
         db.query(order_model.Order)
@@ -112,6 +115,7 @@ def read_by_order(db: Session, order_id: int):
         )
 
 
+# Update
 def update(db: Session, order_detail_id: int, request):
     detail = read_one(db=db, order_detail_id=order_detail_id)
     update_data = request.model_dump(exclude_unset=True)
@@ -132,6 +136,7 @@ def update(db: Session, order_detail_id: int, request):
     return detail
 
 
+# Delete
 def delete(db: Session, order_detail_id: int):
     detail = read_one(db=db, order_detail_id=order_detail_id)
 

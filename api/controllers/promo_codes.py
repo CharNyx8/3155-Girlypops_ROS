@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from ..models import promo_codes as model
 
 
+# Create
 def create(db: Session, request):
     new_promo_code = model.PromoCode(
         promo_code=request.promo_code,
@@ -28,6 +29,7 @@ def create(db: Session, request):
     return new_promo_code
 
 
+# Read
 def read_all(db: Session):
     try:
         return db.query(model.PromoCode).order_by(model.PromoCode.promo_code.asc()).all()
@@ -60,6 +62,7 @@ def read_one(db: Session, promo_code: str):
     return code
 
 
+# Update
 def update(db: Session, promo_code: str, request):
     code = read_one(db=db, promo_code=promo_code)
     update_data = request.model_dump(exclude_unset=True)
@@ -80,6 +83,7 @@ def update(db: Session, promo_code: str, request):
     return code
 
 
+# Delete
 def delete(db: Session, promo_code: str):
     code = read_one(db=db, promo_code=promo_code)
 

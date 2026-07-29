@@ -23,6 +23,6 @@ class OrderDetailsUpdate(BaseModel):
 
 
 class OrderDetails(OrderDetailsBase):
-    order_details_id: int
+    order_detail_id: int
 
     model_config = ConfigDict(from_attributes=True)

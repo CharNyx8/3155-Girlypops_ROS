@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from ..models import customer as model
 
 
+# Create
 def create(db: Session, request):
     new_customer = model.Customer(
         name=request.name,
@@ -27,6 +28,7 @@ def create(db: Session, request):
     return new_customer
 
 
+# Read
 def read_all(db: Session):
     try:
         return db.query(model.Customer).order_by(model.Customer.name.asc()).all()
@@ -59,6 +61,7 @@ def read_one(db: Session, customer_id: int):
     return customer
 
 
+# Update
 def update(db: Session, customer_id: int, request):
     customer = read_one(db=db, customer_id=customer_id)
     update_data = request.model_dump(exclude_unset=True)
@@ -79,6 +82,7 @@ def update(db: Session, customer_id: int, request):
     return customer
 
 
+# Delete
 def delete(db: Session, customer_id: int):
     customer = read_one(db=db, customer_id=customer_id)
 

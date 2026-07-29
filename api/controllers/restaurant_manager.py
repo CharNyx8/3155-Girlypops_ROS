@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from ..models import restaurant_manager as model
 
 
+# Create
 def create(db: Session, request):
     new_manager = model.RestaurantManager(
         name=request.name,
@@ -25,6 +26,7 @@ def create(db: Session, request):
     return new_manager
 
 
+# Read
 def read_all(db: Session):
     try:
         return (
@@ -61,6 +63,7 @@ def read_one(db: Session, manager_id: int):
     return manager
 
 
+# Update
 def update(db: Session, manager_id: int, request):
     manager = read_one(db=db, manager_id=manager_id)
     update_data = request.model_dump(exclude_unset=True)
@@ -81,6 +84,7 @@ def update(db: Session, manager_id: int, request):
     return manager
 
 
+# Delete
 def delete(db: Session, manager_id: int):
     manager = read_one(db=db, manager_id=manager_id)
 

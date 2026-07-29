@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from ..models import employee as model
 
 
+# Create
 def create(db: Session, request):
     new_employee = model.RestaurantEmployee(
         name=request.name,
@@ -25,6 +26,7 @@ def create(db: Session, request):
     return new_employee
 
 
+# Read
 def read_all(db: Session):
     try:
         return (
@@ -61,6 +63,7 @@ def read_one(db: Session, employee_id: int):
     return employee
 
 
+# Update
 def update(db: Session, employee_id: int, request):
     employee = read_one(db=db, employee_id=employee_id)
     update_data = request.model_dump(exclude_unset=True)
@@ -81,6 +84,7 @@ def update(db: Session, employee_id: int, request):
     return employee
 
 
+# Delete
 def delete(db: Session, employee_id: int):
     employee = read_one(db=db, employee_id=employee_id)
 

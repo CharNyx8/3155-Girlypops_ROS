@@ -1,10 +1,12 @@
 from fastapi import HTTPException, Response, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from datetime import date, datetime, time
 
 from ..models import orders as model
 
 
+# Create
 def create(db: Session, request):
     new_order = model.Order(
         order_status=request.order_status,
@@ -30,6 +32,7 @@ def create(db: Session, request):
     return new_order
 
 
+# Read
 def read_all(db: Session):
     try:
         return db.query(model.Order).order_by(model.Order.order_date.desc()).all()
@@ -62,6 +65,31 @@ def read_one(db: Session, order_id: int):
     return order
 
 
+# Read by Date Range
+def read_by_date_range(db: Session, start_date: date, end_date: date):
+    if start_date > end_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Start date cannot be after end date"
+        )
+
+    start_datetime = datetime.combine(start_date, time.min)
+    end_datetime = datetime.combine(end_date, time.max)
+
+    try:
+        return db.query(model.Order).filter(
+            model.Order.order_date >= start_datetime,
+            model.Order.order_date <= end_datetime
+        ).order_by(model.Order.order_date.asc()).all()
+
+    except SQLAlchemyError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error.__dict__.get("orig", error))
+        )
+
+
+# Update
 def update(db: Session, order_id: int, request):
     order = read_one(db=db, order_id=order_id)
     update_data = request.model_dump(exclude_unset=True)
@@ -82,6 +110,7 @@ def update(db: Session, order_id: int, request):
     return order
 
 
+# Delete
 def delete(db: Session, order_id: int):
     order = read_one(db=db, order_id=order_id)
 

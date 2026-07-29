@@ -6,6 +6,7 @@ from ..models import report as model
 from ..models import restaurant_manager as manager_model
 
 
+# Find Manager
 def find_manager(db: Session, manager_id: int):
     manager = (
         db.query(manager_model.RestaurantManager)
@@ -22,6 +23,7 @@ def find_manager(db: Session, manager_id: int):
     return manager
 
 
+# Create
 def create(db: Session, request):
     if request.generated_by_manager_id is not None:
         find_manager(db=db, manager_id=request.generated_by_manager_id)
@@ -45,6 +47,7 @@ def create(db: Session, request):
     return new_report
 
 
+# Read
 def read_all(db: Session):
     try:
         return db.query(model.Report).order_by(model.Report.date_generated.desc()).all()
@@ -77,6 +80,7 @@ def read_one(db: Session, report_id: int):
     return report
 
 
+# Update
 def update(db: Session, report_id: int, request):
     report = read_one(db=db, report_id=report_id)
     update_data = request.model_dump(exclude_unset=True)
@@ -102,6 +106,7 @@ def update(db: Session, report_id: int, request):
     return report
 
 
+# Delete
 def delete(db: Session, report_id: int):
     report = read_one(db=db, report_id=report_id)
 
