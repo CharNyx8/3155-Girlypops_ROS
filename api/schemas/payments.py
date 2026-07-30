@@ -1,28 +1,24 @@
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Literal
 
 from pydantic import BaseModel, ConfigDict
 
 
-class PaymentBase(BaseModel):
+class PaymentCreate(BaseModel):
+    order_id: int
+    payment_method: Literal["Card", "Cash", "Gift Card"]
+
+
+class PaymentUpdate(BaseModel):
+    payment_method: Optional[Literal["Card", "Cash", "Gift Card"]] = None
+    payment_status: Optional[Literal["Pending", "Paid", "Failed", "Refunded"]] = None
+
+
+class Payment(BaseModel):
+    payment_id: int
     order_id: int
     payment_method: str
     payment_status: str
     amount: Decimal
-
-
-class PaymentCreate(PaymentBase):
-    pass
-
-
-class PaymentUpdate(BaseModel):
-    order_id: Optional[int] = None
-    payment_method: Optional[str] = None
-    payment_status: Optional[str] = None
-    amount: Optional[Decimal] = None
-
-
-class Payment(PaymentBase):
-    payment_id: int
 
     model_config = ConfigDict(from_attributes=True)
