@@ -27,11 +27,9 @@ class Report(ReportBase):
 
 
 class DailyRevenue(BaseModel):
-    report_date: datetime
+    report_date: date
     order_count: int
     total_revenue: Decimal
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class MenuPerformance(BaseModel):

@@ -1,6 +1,5 @@
 from fastapi import HTTPException, Response, status
 from sqlalchemy import func
-from sqlalchemy.engine import row
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from datetime import date, datetime, time
@@ -130,7 +129,7 @@ def read_menu_performance(db: Session):
                 menu_item_model.MenuItem.item_id,
                 menu_item_model.MenuItem.item_name,
                 func.coalesce(func.sum(order_detail_model.OrderDetail.quantity), 0
-                ).label("quantity sold")
+                ).label("quantity_sold")
             )
             .outerjoin(
                 order_detail_model.OrderDetail,

@@ -44,7 +44,7 @@ def read_orders_by_date_range(
     return controller.read_by_date_range(db=db, start_date=start_date, end_date=end_date)
 
 
-@router.get("/{order_id/tracking")
+@router.get("/{order_id/tracking", response_model=schema.OrderTracking)
 def track_order(
         order_id: int,
         db: Session = Depends(get_db)
