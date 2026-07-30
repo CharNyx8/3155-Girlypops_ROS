@@ -25,7 +25,18 @@ class Report(ReportBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class DailyRevenue(BaseModel):
     report_date: datetime
     order_count: int
     total_revenue: Decimal
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MenuPerformance(BaseModel):
+    item_id: int
+    item_name: str
+    quantity_sold: int
+
+    model_config = ConfigDict(from_attributes=True)

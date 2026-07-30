@@ -1,5 +1,6 @@
 from fastapi import HTTPException, Response, status
 from sqlalchemy import func
+from sqlalchemy.engine import row
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from datetime import date, datetime, time
@@ -8,7 +9,9 @@ from decimal import Decimal
 from ..models import report as model
 from ..models import restaurant_manager as manager_model
 from ..models import orders as order_model
-from ..models import paymentgs as payment_model
+from ..models import payments as payment_model
+from ..models import menu_item as menu_item_model
+from ..models import order_details as order_detail_model
 
 
 # Find Manager
@@ -117,6 +120,47 @@ def read_daily_revenue(db: Session, report_date: date):
         "order_count": order_count,
         "total_revenue": total_revenue
     }
+
+
+# Menu Performance
+def read_menu_performance(db: Session):
+    try:
+        results = (
+            db.query(
+                menu_item_model.MenuItem.item_id,
+                menu_item_model.MenuItem.item_name,
+                func.coalesce(func.sum(order_detail_model.OrderDetail.quantity), 0
+                ).label("quantity sold")
+            )
+            .outerjoin(
+                order_detail_model.OrderDetail,
+                menu_item_model.MenuItem.item_id == order_detail_model.OrderDetail.item_id
+            )
+            .group_by(
+                menu_item_model.MenuItem.item_id,
+                menu_item_model.MenuItem.item_name
+            )
+            .order_by(
+                func.coalesce(func.sum(order_detail_model.OrderDetail.quantity), 0
+            ).asc()
+        )
+        .all()
+    )
+
+    except SQLAlchemyError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error.__dict__.get("orig", error))
+        )
+
+    return [
+        {
+            "item_id": row.item_id,
+            "item_name": row.item_name,
+            "quantity_sold": row.quantity_sold
+        }
+        for row in results
+    ]
 
 
 # Update

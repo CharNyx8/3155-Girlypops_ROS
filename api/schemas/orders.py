@@ -35,6 +35,8 @@ class OrderTracking(BaseModel):
     order_type: str
     estimated_time: int
 
+    model_config = ConfigDict(from_attributes=True)
+
 class Order(OrderBase):
     order_id: int
     order_date: datetime

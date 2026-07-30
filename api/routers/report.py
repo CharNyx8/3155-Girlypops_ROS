@@ -49,6 +49,11 @@ def read_daily_revenue(
     )
 
 
+@router.get("/menu-performance", response_model=list[schema.MenuPerformance])
+def read_menu_performance(db: Session = Depends(get_db)):
+    return controller.read_menu_performance(db=db)
+
+
 @router.get(
     "/{report_id}",
     response_model=schema.Report
