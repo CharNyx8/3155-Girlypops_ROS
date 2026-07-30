@@ -5,24 +5,18 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 
 
-class OrderBase(BaseModel):
+class OrderCreate(BaseModel):
     order_status: str
     order_type: str
-    total_price: Decimal
     estimated_time: int
     promo_code: Optional[str] = None
     customer_id: Optional[int] = None
     employee_id: Optional[int] = None
 
 
-class OrderCreate(OrderBase):
-    pass
-
-
 class OrderUpdate(BaseModel):
     order_status: Optional[str] = None
     order_type: Optional[str] = None
-    total_price: Optional[Decimal] = None
     estimated_time: Optional[int] = None
     promo_code: Optional[str] = None
     customer_id: Optional[int] = None
@@ -37,8 +31,16 @@ class OrderTracking(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-class Order(OrderBase):
+
+class Order(BaseModel):
     order_id: int
     order_date: datetime
+    order_status: str
+    order_type: str
+    total_price: Decimal
+    estimated_time: int
+    promo_code: Optional[str] = None
+    customer_id: Optional[int] = None
+    employee_id: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)

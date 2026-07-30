@@ -2,12 +2,58 @@ from fastapi import HTTPException, Response, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from decimal import Decimal
+from sqlalchemy import func
+from datetime import datetime
 
 from ..models import menu_item as menu_item_model
 from ..models import order_details as model
 from ..models import orders as order_model
 from ..models import inventory as inventory_model
 from ..models import menu_item_inventory as menu_item_inventory_model
+from ..models import promo_codes as promo_model
+
+
+def recalculate_order_total(db: Session, order_id: int):
+    order = (
+        db.query(order_model.Order)
+        .filter(order_model.Order.order_id == order_id)
+        .first()
+    )
+
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found"
+        )
+
+    subtotal = (
+        db.query(
+            func.coalesce(
+                func.sum(
+                    model.OrderDetail.quantity * model.OrderDetail.unit_price
+                ), 0
+            )
+        )
+        .filter(model.OrderDetail.order_id == order_id)
+        .scalar()
+    )
+
+    total = Decimal(subtotal or 0)
+
+    if order.promo_code:
+        promo = (
+            db.query(promo_model.PromoCode)
+            .filter(
+                promo_model.PromoCode.promo_code == order.promo_code
+            )
+            .first()
+        )
+
+        if promo and promo.is_active and promo.expiration_date >= datetime.now():
+            total -= Decimal(promo.discount_amount)
+            total = max(total, Decimal("0.00"))
+
+    order.total_price = total
 
 
 def get_inventory_requirements(db: Session, item_id: int):
@@ -121,6 +167,8 @@ def create(db: Session, request):
 
     try:
         db.add(new_detail)
+        db.flush()
+        recalculate_order_total(db=db, order_id=request.order_id)
         db.commit()
         db.refresh(new_detail)
     except SQLAlchemyError as error:
@@ -209,6 +257,8 @@ def update(db: Session, order_detail_id: int, request):
         for field, value in update_data.items():
             setattr(detail, field, value)
 
+        db.flush()
+        recalculate_order_total(db=db, order_id=detail.order_id)
         db.commit()
         db.refresh(detail)
 
@@ -232,8 +282,13 @@ def delete(db: Session, order_detail_id: int):
 
     try:
         adjust_inventory(db=db, item_id=detail.item_id, quantity_change=-detail.quantity)
+        order_id = detail.order_id
 
         db.delete(detail)
+        db.flush()
+
+        recalculate_order_total(db=db, order_id=order_id)
+
         db.commit()
 
     except HTTPException:

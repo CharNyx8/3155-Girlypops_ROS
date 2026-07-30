@@ -2,16 +2,49 @@ from fastapi import HTTPException, Response, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from datetime import date, datetime, time
+from decimal import Decimal
 
 from ..models import orders as model
+from ..models import promo_codes as promo_model
+
+
+def validate_promo_code(db: Session, promo_code: str):
+    code = (
+        db.query(model.PromoCode)
+        .filter(promo_model.PromoCode.promo_code == promo_code)
+        .first()
+    )
+
+    if not code:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Promo code not found"
+        )
+
+    if not code.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Promo code is inactive"
+        )
+
+    if code.expiration_date < datetime.now():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Promo code has expired"
+        )
+
+    return code
 
 
 # Create
 def create(db: Session, request):
+    if request.promo_code:
+        validate_promo_code(db=db, promo_code=request.promo_code)
+
     new_order = model.Order(
         order_status=request.order_status,
         order_type=request.order_type,
-        total_price=request.total_price,
+        total_price=Decimal("0.00"),
         estimated_time=request.estimated_time,
         promo_code=request.promo_code,
         customer_id=request.customer_id,
@@ -105,6 +138,9 @@ def read_by_date_range(db: Session, start_date: date, end_date: date):
 def update(db: Session, order_id: int, request):
     order = read_one(db=db, order_id=order_id)
     update_data = request.model_dump(exclude_unset=True)
+
+    if "promo_code" in update_data and update_data["promo_code"]:
+        validate_promo_code(db=db, promo_code=update_data["promo_code"])
 
     try:
         for field, value in update_data.items():
