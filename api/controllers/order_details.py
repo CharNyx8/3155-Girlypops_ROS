@@ -13,6 +13,16 @@ from ..models import menu_item_inventory as menu_item_inventory_model
 from ..models import promo_codes as promo_model
 
 
+# Checks that the order is pending before allowing edits
+def ensure_order_is_editable(order):
+    if order.order_status not in {"Pending"}:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Order details can only be changed while the order is pending"
+        )
+
+
+# Recalculates the order total with respect to promo codes
 def recalculate_order_total(db: Session, order_id: int):
     order = (
         db.query(order_model.Order)
@@ -56,6 +66,7 @@ def recalculate_order_total(db: Session, order_id: int):
     order.total_price = total
 
 
+# Gets required ingredients for menu item
 def get_inventory_requirements(db: Session, item_id: int):
     try:
         return (
@@ -70,6 +81,7 @@ def get_inventory_requirements(db: Session, item_id: int):
         )
 
 
+# Adjust inventory based on required menu item ingredients
 def adjust_inventory(db: Session, item_id: int, quantity_change: int):
     requirements = get_inventory_requirements(
         db=db,
@@ -132,6 +144,8 @@ def create(db: Session, request):
         .filter(order_model.Order.order_id == request.order_id)
         .first()
     )
+
+    ensure_order_is_editable(order)
 
     if not order:
         raise HTTPException(
