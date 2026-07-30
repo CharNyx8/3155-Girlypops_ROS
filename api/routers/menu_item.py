@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from ..controllers import menu_item as controller
 from ..dependencies.database import get_db
@@ -32,6 +33,26 @@ def read_all_menu_items(
     db: Session = Depends(get_db)
 ):
     return controller.read_all(db)
+
+
+@router.get(
+    "/search",
+    response_model=list[schema.MenuItem]
+)
+def search_menu_items(
+    keyword: Optional[str] = None,
+    category: Optional[str] = None,
+    dietary_type: Optional[str] = None,
+    available_only: bool = True,
+    db: Session = Depends(get_db)
+):
+    return controller.search(
+        db=db,
+        keyword=keyword,
+        category=category,
+        dietary_type=dietary_type,
+        available_only=available_only
+    )
 
 
 @router.get(
