@@ -34,6 +34,11 @@ def read_all_inventory_items(
     return controller.read_all(db)
 
 
+@router.get("/low-stock", response_model=list[schema.Inventory])
+def read_low_stock_inventory(db: Session = Depends(get_db)):
+    return controller.read_low_stock(db=db)
+
+
 @router.get(
     "/{ingredient_id}",
     response_model=schema.Inventory

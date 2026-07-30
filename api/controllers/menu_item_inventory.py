@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from ..models import menu_item_inventory as model
 
 
+# Create
 def create(db: Session, request):
     new_link = model.MenuItemInventory(**request.model_dump())
 
@@ -22,6 +23,7 @@ def create(db: Session, request):
     return new_link
 
 
+# Read
 def read_all(db: Session):
     try:
         return db.query(model.MenuItemInventory).all()
@@ -57,6 +59,7 @@ def read_one(db: Session, item_id: int, ingredient_id: int):
     return link
 
 
+# Update
 def update(db: Session, item_id: int, ingredient_id: int, request):
     link = read_one(db=db, item_id=item_id, ingredient_id=ingredient_id)
     update_data = request.model_dump(exclude_unset=True)
@@ -77,6 +80,7 @@ def update(db: Session, item_id: int, ingredient_id: int, request):
     return link
 
 
+# Delete
 def delete(db: Session, item_id: int, ingredient_id: int):
     link = read_one(db=db, item_id=item_id, ingredient_id=ingredient_id)
 

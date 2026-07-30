@@ -1,28 +1,27 @@
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class OrderDetailsBase(BaseModel):
+class OrderDetailsCreate(BaseModel):
     order_id: int
     item_id: int
-    quantity: int = 1
-    unit_price: Decimal
+    quantity: int = Field(default=1, ge=1)
     special_instructions: Optional[str] = None
-
-
-class OrderDetailsCreate(OrderDetailsBase):
-    pass
 
 
 class OrderDetailsUpdate(BaseModel):
     quantity: Optional[int] = None
-    unit_price: Optional[Decimal] = None
     special_instructions: Optional[str] = None
 
 
-class OrderDetails(OrderDetailsBase):
-    order_details_id: int
+class OrderDetails(BaseModel):
+    order_detail_id: int
+    order_id: int
+    item_id: int
+    quantity: int = Field(default=1, ge=1)
+    unit_price: Decimal
+    special_instructions: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)

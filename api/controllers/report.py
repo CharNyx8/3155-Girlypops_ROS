@@ -1,11 +1,19 @@
 from fastapi import HTTPException, Response, status
+from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from datetime import date, datetime, time
+from decimal import Decimal
 
 from ..models import report as model
 from ..models import restaurant_manager as manager_model
+from ..models import orders as order_model
+from ..models import payments as payment_model
+from ..models import menu_item as menu_item_model
+from ..models import order_details as order_detail_model
 
 
+# Find Manager
 def find_manager(db: Session, manager_id: int):
     manager = (
         db.query(manager_model.RestaurantManager)
@@ -22,6 +30,7 @@ def find_manager(db: Session, manager_id: int):
     return manager
 
 
+# Create
 def create(db: Session, request):
     if request.generated_by_manager_id is not None:
         find_manager(db=db, manager_id=request.generated_by_manager_id)
@@ -45,6 +54,7 @@ def create(db: Session, request):
     return new_report
 
 
+# Read
 def read_all(db: Session):
     try:
         return db.query(model.Report).order_by(model.Report.date_generated.desc()).all()
@@ -77,6 +87,82 @@ def read_one(db: Session, report_id: int):
     return report
 
 
+# Daily Revenue
+def read_daily_revenue(db: Session, report_date: date):
+    start_datetime = datetime.combine(report_date, time.min)
+    end_datetime = datetime.combine(report_date, time.max)
+
+    try:
+        result = (
+            db.query(func.count(payment_model.Payment.payment_id),
+                     func.coalesce(func.sum(payment_model.Payment.amount), 0)
+        ).join(
+                order_model.Order,
+                payment_model.Payment.order_id == order_model.Order.order_id
+        ).filter(
+                order_model.Order.order_date >= start_datetime,
+                order_model.Order.order_date <= end_datetime,
+                payment_model.Payment.payment_status == "Paid"
+            ).first()
+    )
+    except SQLAlchemyError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error.__dict__.get("orig", error))
+        )
+
+    order_count = result[0] if result else 0
+    total_revenue = result[1] if result else Decimal("0.00")
+
+    return {
+        "report_date": report_date,
+        "order_count": order_count,
+        "total_revenue": total_revenue
+    }
+
+
+# Menu Performance
+def read_menu_performance(db: Session):
+    try:
+        results = (
+            db.query(
+                menu_item_model.MenuItem.item_id,
+                menu_item_model.MenuItem.item_name,
+                func.coalesce(func.sum(order_detail_model.OrderDetail.quantity), 0
+                ).label("quantity_sold")
+            )
+            .outerjoin(
+                order_detail_model.OrderDetail,
+                menu_item_model.MenuItem.item_id == order_detail_model.OrderDetail.item_id
+            )
+            .group_by(
+                menu_item_model.MenuItem.item_id,
+                menu_item_model.MenuItem.item_name
+            )
+            .order_by(
+                func.coalesce(func.sum(order_detail_model.OrderDetail.quantity), 0
+            ).asc()
+        )
+        .all()
+    )
+
+    except SQLAlchemyError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error.__dict__.get("orig", error))
+        )
+
+    return [
+        {
+            "item_id": row.item_id,
+            "item_name": row.item_name,
+            "quantity_sold": row.quantity_sold
+        }
+        for row in results
+    ]
+
+
+# Update
 def update(db: Session, report_id: int, request):
     report = read_one(db=db, report_id=report_id)
     update_data = request.model_dump(exclude_unset=True)
@@ -102,6 +188,7 @@ def update(db: Session, report_id: int, request):
     return report
 
 
+# Delete
 def delete(db: Session, report_id: int):
     report = read_one(db=db, report_id=report_id)
 

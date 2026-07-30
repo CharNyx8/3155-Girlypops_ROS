@@ -3,14 +3,47 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from ..models import payments as model
+from ..models import orders as order_model
 
 
+# Create
 def create(db: Session, request):
+    order = (
+        db.query(order_model.Order)
+        .filter(order_model.Order.order_id == request.order_id)
+        .first()
+    )
+
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found"
+        )
+
+    existing_payment = (
+        db.query(model.Payment)
+        .filter(model.Payment.order == request.order_id)
+        .first()
+    )
+
+    if existing_payment:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Payment already exists"
+        )
+
+    if order.total_price <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Order total must be greater than 0"
+        )
+
+
     new_payment = model.Payment(
         order_id=request.order_id,
         payment_method=request.payment_method,
-        payment_status=request.payment_status,
-        amount=request.amount
+        payment_status=r"Paid",
+        amount=order.total_price
     )
 
     try:
@@ -27,6 +60,7 @@ def create(db: Session, request):
     return new_payment
 
 
+# Read
 def read_all(db: Session):
     try:
         return db.query(model.Payment).all()
@@ -59,6 +93,7 @@ def read_one(db: Session, payment_id: int):
     return payment
 
 
+# Update
 def update(db: Session, payment_id: int, request):
     payment = read_one(db=db, payment_id=payment_id)
     update_data = request.model_dump(exclude_unset=True)
@@ -79,6 +114,7 @@ def update(db: Session, payment_id: int, request):
     return payment
 
 
+# Delete
 def delete(db: Session, payment_id: int):
     payment = read_one(db=db, payment_id=payment_id)
 

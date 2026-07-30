@@ -7,6 +7,7 @@ from ..models import menu_item as menu_item_model
 from ..models import review as model
 
 
+# Create
 def create(db: Session, request):
     customer = (
         db.query(customer_model.Customer)
@@ -53,6 +54,7 @@ def create(db: Session, request):
     return new_review
 
 
+# Read
 def read_all(db: Session):
     try:
         return db.query(model.Review).order_by(model.Review.review_date.desc()).all()
@@ -85,6 +87,7 @@ def read_one(db: Session, review_id: int):
     return review
 
 
+# Read by Menu Items
 def read_by_menu_item(db: Session, item_id: int):
     menu_item = (
         db.query(menu_item_model.MenuItem)
@@ -112,6 +115,7 @@ def read_by_menu_item(db: Session, item_id: int):
         )
 
 
+# Update
 def update(db: Session, review_id: int, request):
     review = read_one(db=db, review_id=review_id)
     update_data = request.model_dump(exclude_unset=True)
@@ -132,6 +136,7 @@ def update(db: Session, review_id: int, request):
     return review
 
 
+# Delete
 def delete(db: Session, review_id: int):
     review = read_one(db=db, review_id=review_id)
 

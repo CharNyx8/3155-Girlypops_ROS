@@ -1,18 +1,151 @@
 from fastapi import HTTPException, Response, status
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from decimal import Decimal
+from sqlalchemy import func
+from datetime import datetime
 
 from ..models import menu_item as menu_item_model
 from ..models import order_details as model
 from ..models import orders as order_model
+from ..models import inventory as inventory_model
+from ..models import menu_item_inventory as menu_item_inventory_model
+from ..models import promo_codes as promo_model
 
 
+# Checks that the order is pending before allowing edits
+def ensure_order_is_editable(order):
+    if order.order_status not in {"Pending"}:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Order details can only be changed while the order is pending"
+        )
+
+
+# Recalculates the order total with respect to promo codes
+def recalculate_order_total(db: Session, order_id: int):
+    order = (
+        db.query(order_model.Order)
+        .filter(order_model.Order.order_id == order_id)
+        .first()
+    )
+
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found"
+        )
+
+    subtotal = (
+        db.query(
+            func.coalesce(
+                func.sum(
+                    model.OrderDetail.quantity * model.OrderDetail.unit_price
+                ), 0
+            )
+        )
+        .filter(model.OrderDetail.order_id == order_id)
+        .scalar()
+    )
+
+    total = Decimal(subtotal or 0)
+
+    if order.promo_code:
+        promo = (
+            db.query(promo_model.PromoCode)
+            .filter(
+                promo_model.PromoCode.promo_code == order.promo_code
+            )
+            .first()
+        )
+
+        if promo and promo.is_active and promo.expiration_date >= datetime.now():
+            total -= Decimal(promo.discount_amount)
+            total = max(total, Decimal("0.00"))
+
+    order.total_price = total
+
+
+# Gets required ingredients for menu item
+def get_inventory_requirements(db: Session, item_id: int):
+    try:
+        return (
+            db.query(menu_item_inventory_model.MenuItemInventory)
+            .filter(menu_item_inventory_model.MenuItemInventory.item_id == item_id)
+            .all()
+        )
+    except SQLAlchemyError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error.__dict__.get("orig", error))
+        )
+
+
+# Adjust inventory based on required menu item ingredients
+def adjust_inventory(db: Session, item_id: int, quantity_change: int):
+    requirements = get_inventory_requirements(
+        db=db,
+        item_id=item_id
+    )
+
+    inventory_adjustments = []
+    shortages = []
+
+    for requirement in requirements:
+        ingredient = (
+            db.query(inventory_model.Inventory)
+            .filter(
+                inventory_model.Inventory.ingredient_id
+                == requirement.ingredient_id
+            )
+            .first()
+        )
+
+        if not ingredient:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=(
+                    f"Inventory ingredient "
+                    f"{requirement.ingredient_id} not found"
+                )
+            )
+
+        required_amount = (Decimal(requirement.quantity_required) * Decimal(quantity_change))
+
+        new_quantity = (Decimal(ingredient.quantity) - required_amount)
+
+        if new_quantity < 0:
+            shortages.append({
+                "ingredient_id": ingredient.ingredient_id,
+                "ingredient_name": ingredient.ingredient_name,
+                "required": required_amount,
+                "available": ingredient.quantity
+            })
+
+        inventory_adjustments.append((ingredient, new_quantity))
+
+    if shortages:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "message": "Insufficient ingredients",
+                "shortages": shortages
+            }
+        )
+
+    for ingredient, new_quantity in inventory_adjustments:
+        ingredient.quantity = new_quantity
+
+
+# Create
 def create(db: Session, request):
     order = (
         db.query(order_model.Order)
         .filter(order_model.Order.order_id == request.order_id)
         .first()
     )
+
+    ensure_order_is_editable(order)
 
     if not order:
         raise HTTPException(
@@ -32,16 +165,24 @@ def create(db: Session, request):
             detail="Menu item not found"
         )
 
+    adjust_inventory(
+        db=db,
+        item_id=request.item_id,
+        quantity_change=request.quantity
+    )
+
     new_detail = model.OrderDetail(
         order_id=request.order_id,
         item_id=request.item_id,
         quantity=request.quantity,
-        unit_price=request.unit_price,
+        unit_price=menu_item.price,
         special_instructions=request.special_instructions
     )
 
     try:
         db.add(new_detail)
+        db.flush()
+        recalculate_order_total(db=db, order_id=request.order_id)
         db.commit()
         db.refresh(new_detail)
     except SQLAlchemyError as error:
@@ -54,6 +195,7 @@ def create(db: Session, request):
     return new_detail
 
 
+# Read
 def read_all(db: Session):
     try:
         return db.query(model.OrderDetail).all()
@@ -86,6 +228,7 @@ def read_one(db: Session, order_detail_id: int):
     return detail
 
 
+# Read by Order
 def read_by_order(db: Session, order_id: int):
     order = (
         db.query(order_model.Order)
@@ -112,16 +255,31 @@ def read_by_order(db: Session, order_id: int):
         )
 
 
+# Update
 def update(db: Session, order_detail_id: int, request):
     detail = read_one(db=db, order_detail_id=order_detail_id)
     update_data = request.model_dump(exclude_unset=True)
 
     try:
+        if "quantity" in update_data:
+            new_quantity = update_data["quantity"]
+            quantity_change = (new_quantity - detail.quantity)
+
+            if quantity_change != 0:
+                adjust_inventory(db=db, item_id=detail.item_id, quantity_change=quantity_change)
+
         for field, value in update_data.items():
             setattr(detail, field, value)
 
+        db.flush()
+        recalculate_order_total(db=db, order_id=detail.order_id)
         db.commit()
         db.refresh(detail)
+
+    except HTTPException:
+            db.rollback()
+            raise
+
     except SQLAlchemyError as error:
         db.rollback()
         raise HTTPException(
@@ -132,12 +290,25 @@ def update(db: Session, order_detail_id: int, request):
     return detail
 
 
+# Delete
 def delete(db: Session, order_detail_id: int):
     detail = read_one(db=db, order_detail_id=order_detail_id)
 
     try:
+        adjust_inventory(db=db, item_id=detail.item_id, quantity_change=-detail.quantity)
+        order_id = detail.order_id
+
         db.delete(detail)
+        db.flush()
+
+        recalculate_order_total(db=db, order_id=order_id)
+
         db.commit()
+
+    except HTTPException:
+        db.rollback()
+        raise
+
     except SQLAlchemyError as error:
         db.rollback()
         raise HTTPException(

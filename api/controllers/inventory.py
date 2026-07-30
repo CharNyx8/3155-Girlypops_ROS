@@ -5,6 +5,23 @@ from sqlalchemy.orm import Session
 from ..models import inventory as model
 
 
+# Read Low Stock
+def read_low_stock(db: Session):
+    try:
+        return (
+            db.query(model.Inventory)
+            .filter(model.Inventory.quantity <= model.Inventory.minimum_quantity)
+            .order_by(model.Inventory.ingredient_name.asc())
+            .all()
+    )
+    except SQLAlchemyError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(error.__dict__.get("orig", error))
+        )
+
+
+# Create
 def create(db: Session, request):
     new_item = model.Inventory(**request.model_dump())
 
@@ -22,6 +39,7 @@ def create(db: Session, request):
     return new_item
 
 
+# Read
 def read_all(db: Session):
     try:
         return db.query(model.Inventory).order_by(model.Inventory.ingredient_name.asc()).all()
@@ -54,6 +72,7 @@ def read_one(db: Session, ingredient_id: int):
     return item
 
 
+# Update
 def update(db: Session, ingredient_id: int, request):
     item = read_one(db=db, ingredient_id=ingredient_id)
     update_data = request.model_dump(exclude_unset=True)
@@ -74,6 +93,7 @@ def update(db: Session, ingredient_id: int, request):
     return item
 
 
+# Delete
 def delete(db: Session, ingredient_id: int):
     item = read_one(db=db, ingredient_id=ingredient_id)
 
