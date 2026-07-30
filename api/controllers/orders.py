@@ -65,6 +65,18 @@ def read_one(db: Session, order_id: int):
     return order
 
 
+# Track Order
+def track_order(db: Session, order_id: int):
+    order = read_one(db=db, order_id=order_id)
+
+    return {
+        "order_id": order_id,
+        "order_status": order.order_status,
+        "order_type": order.order_type,
+        "estimated_time": order.estimated_time
+    }
+
+
 # Read by Date Range
 def read_by_date_range(db: Session, start_date: date, end_date: date):
     if start_date > end_date:

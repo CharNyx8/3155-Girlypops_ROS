@@ -29,6 +29,12 @@ class OrderUpdate(BaseModel):
     employee_id: Optional[int] = None
 
 
+class OrderTracking(BaseModel):
+    order_id: int
+    order_status: str
+    order_type: str
+    estimated_time: int
+
 class Order(OrderBase):
     order_id: int
     order_date: datetime
