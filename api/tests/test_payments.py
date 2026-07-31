@@ -33,11 +33,26 @@ def database_error(message):
 # CREATE
 # ---------------------------------------------------------
 
-def test_create_payment_success(
-    db_session,
-    payment_request,
-    mocker
-):
+def test_create_payment_success(db_session, mocker):
+    order = mocker.Mock()
+    order.order_id = 1
+    order.total_price = Decimal("24.99")
+
+    order_query = mocker.Mock()
+    order_query.filter.return_value.first.return_value = order
+
+    payment_query = mocker.Mock()
+    payment_query.filter.return_value.first.return_value = None
+
+    db_session.query.side_effect = [
+        order_query,
+        payment_query
+    ]
+
+    request = mocker.Mock()
+    request.order_id = 1
+    request.payment_method = "Card"
+
     created_payment = mocker.Mock()
     created_payment.payment_id = 1
     created_payment.order_id = 1
@@ -52,7 +67,7 @@ def test_create_payment_success(
 
     result = controller.create(
         db=db_session,
-        request=payment_request
+        request=request
     )
 
     payment_constructor.assert_called_once_with(
@@ -72,11 +87,26 @@ def test_create_payment_success(
     assert result.payment_status == "Paid"
 
 
-def test_create_payment_database_error(
-    db_session,
-    payment_request,
-    mocker
-):
+def test_create_payment_database_error(db_session, mocker):
+    order = mocker.Mock()
+    order.order_id = 1
+    order.total_price = Decimal("24.99")
+
+    order_query = mocker.Mock()
+    order_query.filter.return_value.first.return_value = order
+
+    payment_query = mocker.Mock()
+    payment_query.filter.return_value.first.return_value = None
+
+    db_session.query.side_effect = [
+        order_query,
+        payment_query
+    ]
+
+    request = mocker.Mock()
+    request.order_id = 1
+    request.payment_method = "Card"
+
     fake_payment = mocker.Mock()
 
     mocker.patch(
@@ -91,11 +121,12 @@ def test_create_payment_database_error(
     with pytest.raises(HTTPException) as exception:
         controller.create(
             db=db_session,
-            request=payment_request
+            request=request
         )
 
     assert exception.value.status_code == status.HTTP_400_BAD_REQUEST
     assert exception.value.detail == "Unable to create payment"
+
     db_session.rollback.assert_called_once()
 
 

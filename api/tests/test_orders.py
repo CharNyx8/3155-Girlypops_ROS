@@ -1,5 +1,6 @@
 from decimal import Decimal
 from types import SimpleNamespace
+from datetime import date, timedelta, datetime
 
 import pytest
 from fastapi import HTTPException, status
@@ -18,7 +19,6 @@ def order_request():
     return SimpleNamespace(
         order_status="Pending",
         order_type="Takeout",
-        total_price=Decimal("24.99"),
         estimated_time=20,
         promo_code=None,
         customer_id=1,
@@ -40,6 +40,11 @@ def test_create_order_success(db_session, order_request, mocker):
     created_order = mocker.Mock()
     created_order.order_id = 1
     created_order.order_status = "Pending"
+    created_order.total_price = Decimal("0.00")
+
+    validate_promo = mocker.patch(
+        "api.controllers.orders.validate_promo_code"
+    )
 
     order_constructor = mocker.patch(
         "api.controllers.orders.model.Order",
@@ -48,10 +53,12 @@ def test_create_order_success(db_session, order_request, mocker):
 
     result = controller.create(db=db_session, request=order_request)
 
+    validate_promo.assert_not_called()
+
     order_constructor.assert_called_once_with(
         order_status="Pending",
         order_type="Takeout",
-        total_price=Decimal("24.99"),
+        total_price=Decimal("0.00"),
         estimated_time=20,
         promo_code=None,
         customer_id=1,
@@ -63,6 +70,7 @@ def test_create_order_success(db_session, order_request, mocker):
     db_session.refresh.assert_called_once_with(created_order)
 
     assert result == created_order
+    assert result.total_price == Decimal("0.00")
     assert result.order_id == 1
     assert result.order_status == "Pending"
 
@@ -179,6 +187,132 @@ def test_read_one_order_database_error(db_session):
 
     assert exception.value.status_code == status.HTTP_400_BAD_REQUEST
     assert exception.value.detail == "Unable to read order"
+
+
+# ---------------------------------------------------------
+# ORDERS BY DATE RANGE
+# ---------------------------------------------------------
+def test_read_orders_by_date_range_success(db_session, mocker):
+    expected_orders = [
+        mocker.Mock(order_id=1),
+        mocker.Mock(order_id=2)
+    ]
+
+    query = db_session.query.return_value
+    filtered_query = query.filter.return_value
+    ordered_query = filtered_query.order_by.return_value
+    ordered_query.all.return_value = expected_orders
+
+    result = controller.read_by_date_range(
+        db=db_session,
+        start_date=date(2026, 7, 1),
+        end_date=date(2026, 7, 31)
+    )
+
+    assert result == expected_orders
+    assert len(result) == 2
+
+
+def test_read_orders_by_date_range_invalid_dates(db_session):
+    with pytest.raises(HTTPException) as exception:
+        controller.read_by_date_range(
+            db=db_session,
+            start_date=date(2026, 7, 31),
+            end_date=date(2026, 7, 1)
+        )
+
+    assert exception.value.status_code == status.HTTP_400_BAD_REQUEST
+    assert exception.value.detail == (
+        "Start date cannot be after end date"
+    )
+
+
+# ---------------------------------------------------------
+# ORDER TRACKING
+# ---------------------------------------------------------
+def test_track_order_success(db_session, mocker):
+    order = mocker.Mock(
+        order_id=1,
+        order_status="Preparing",
+        order_type="Takeout",
+        estimated_time=20
+    )
+
+    mocker.patch(
+        "api.controllers.orders.read_one",
+        return_value=order
+    )
+
+    result = controller.track_order(
+        db=db_session,
+        order_id=1
+    )
+
+    assert result == {
+        "order_id": 1,
+        "order_status": "Preparing",
+        "order_type": "Takeout",
+        "estimated_time": 20
+    }
+
+
+def test_track_order_not_found(db_session, mocker):
+    mocker.patch(
+        "api.controllers.orders.read_one",
+        side_effect=HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found"
+        )
+    )
+
+    with pytest.raises(HTTPException) as exception:
+        controller.track_order(
+            db=db_session,
+            order_id=999
+        )
+
+    assert exception.value.status_code == status.HTTP_404_NOT_FOUND
+
+
+# ---------------------------------------------------------
+# PROMO CODE VALIDATION
+# ---------------------------------------------------------
+def test_validate_promo_code_success(db_session, mocker):
+    promo = mocker.Mock(
+        promo_code="SAVE10",
+        is_active=True,
+        expiration_date=datetime.now() + timedelta(days=30)
+    )
+
+    query = db_session.query.return_value
+    query.filter.return_value.first.return_value = promo
+
+    result = controller.validate_promo_code(
+        db=db_session,
+        promo_code="SAVE10"
+    )
+
+    assert result == promo
+
+
+def test_validate_expired_promo_code(db_session, mocker):
+    promo = mocker.Mock(
+        promo_code="OLD10",
+        is_active=True,
+        expiration_date=datetime.now() - timedelta(days=1)
+    )
+
+    query = db_session.query.return_value
+    query.filter.return_value.first.return_value = promo
+
+    with pytest.raises(HTTPException) as exception:
+        controller.validate_promo_code(
+            db=db_session,
+            promo_code="OLD10"
+        )
+
+    assert exception.value.status_code == status.HTTP_400_BAD_REQUEST
+    assert exception.value.detail == "Promo code has expired"
 
 
 # ---------------------------------------------------------

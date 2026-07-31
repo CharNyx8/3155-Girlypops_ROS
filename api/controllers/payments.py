@@ -22,7 +22,7 @@ def create(db: Session, request):
 
     existing_payment = (
         db.query(model.Payment)
-        .filter(model.Payment.order == request.order_id)
+        .filter(model.Payment.order_id == request.order_id)
         .first()
     )
 

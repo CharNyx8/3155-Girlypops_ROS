@@ -10,7 +10,7 @@ from ..models import promo_codes as promo_model
 
 def validate_promo_code(db: Session, promo_code: str):
     code = (
-        db.query(model.PromoCode)
+        db.query(promo_model.PromoCode)
         .filter(promo_model.PromoCode.promo_code == promo_code)
         .first()
     )

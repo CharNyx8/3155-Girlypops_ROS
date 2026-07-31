@@ -1,4 +1,6 @@
 from types import SimpleNamespace
+from datetime import date
+from decimal import Decimal
 
 import pytest
 from fastapi import HTTPException, status
@@ -65,6 +67,105 @@ def test_find_manager_not_found(db_session):
 
     assert exception.value.status_code == status.HTTP_404_NOT_FOUND
     assert exception.value.detail == "Restaurant manager not found"
+
+
+# ---------------------------------------------------------
+# DAILY REVENUE
+# ---------------------------------------------------------
+def test_read_daily_revenue_success(db_session):
+    query = db_session.query.return_value
+    joined_query = query.join.return_value
+    filtered_query = joined_query.filter.return_value
+    filtered_query.first.return_value = (
+        3,
+        Decimal("75.50")
+    )
+
+    result = controller.read_daily_revenue(
+        db=db_session,
+        report_date=date(2026, 7, 31)
+    )
+
+    assert result == {
+        "report_date": date(2026, 7, 31),
+        "order_count": 3,
+        "total_revenue": Decimal("75.50")
+    }
+
+
+def test_read_daily_revenue_no_sales(db_session):
+    query = db_session.query.return_value
+    joined_query = query.join.return_value
+    filtered_query = joined_query.filter.return_value
+    filtered_query.first.return_value = (
+        0,
+        Decimal("0.00")
+    )
+
+    result = controller.read_daily_revenue(
+        db=db_session,
+        report_date=date(2026, 7, 31)
+    )
+
+    assert result["order_count"] == 0
+    assert result["total_revenue"] == Decimal("0.00")
+
+
+# ---------------------------------------------------------
+# MENU PERFORMANCE
+# ---------------------------------------------------------
+def test_read_menu_performance_success(db_session, mocker):
+    row_one = mocker.Mock(
+        item_id=2,
+        item_name="Garden Salad",
+        quantity_sold=0
+    )
+    row_two = mocker.Mock(
+        item_id=1,
+        item_name="Classic Burger",
+        quantity_sold=5
+    )
+
+    query = db_session.query.return_value
+    joined_query = query.outerjoin.return_value
+    grouped_query = joined_query.group_by.return_value
+    ordered_query = grouped_query.order_by.return_value
+    ordered_query.all.return_value = [
+        row_one,
+        row_two
+    ]
+
+    result = controller.read_menu_performance(
+        db=db_session
+    )
+
+    assert result == [
+        {
+            "item_id": 2,
+            "item_name": "Garden Salad",
+            "quantity_sold": 0
+        },
+        {
+            "item_id": 1,
+            "item_name": "Classic Burger",
+            "quantity_sold": 5
+        }
+    ]
+
+
+def test_read_menu_performance_database_error(db_session):
+    db_session.query.side_effect = database_error(
+        "Unable to calculate menu performance"
+    )
+
+    with pytest.raises(HTTPException) as exception:
+        controller.read_menu_performance(
+            db=db_session
+        )
+
+    assert exception.value.status_code == (
+        status.HTTP_400_BAD_REQUEST
+    )
 
 
 # ---------------------------------------------------------

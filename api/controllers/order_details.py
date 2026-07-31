@@ -15,6 +15,11 @@ from ..models import promo_codes as promo_model
 
 # Checks that the order is pending before allowing edits
 def ensure_order_is_editable(order):
+    if order is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found"
+        )
     if order.order_status not in {"Pending"}:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -118,8 +123,8 @@ def adjust_inventory(db: Session, item_id: int, quantity_change: int):
             shortages.append({
                 "ingredient_id": ingredient.ingredient_id,
                 "ingredient_name": ingredient.ingredient_name,
-                "required": required_amount,
-                "available": ingredient.quantity
+                "required": float(required_amount),
+                "available": float(ingredient.quantity)
             })
 
         inventory_adjustments.append((ingredient, new_quantity))
